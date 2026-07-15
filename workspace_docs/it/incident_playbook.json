@@ -1,0 +1,6 @@
+{
+  "title": "Incident Playbook",
+  "team": "Infrastructure",
+  "steps": ["Detect issue", "Contain impact", "Rollback deployment", "Validate service health"],
+  "tags": ["server", "incident", "security"]
+}

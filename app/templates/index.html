@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DocSearch — Enterprise File Retrieval</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="shell">
+
+<!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-icon">🔍</div>
+    <div>
+      <div class="sb-brand">DocSearch</div>
+      <div class="sb-sub">Enterprise Retrieval</div>
+    </div>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-section">Main</div>
+    <a href="/?user_id={{ selected_user }}" class="sb-item {% if active_tab=='search' %}active{% endif %}">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      Search
+    </a>
+    <a href="/browse?user_id={{ selected_user }}" class="sb-item {% if active_tab=='browse' %}active{% endif %}">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Browse Files
+      {% if stats.documents %}<span class="sb-badge">{{ stats.documents }}</span>{% endif %}
+    </a>
+    <a href="/bookmarks?user_id={{ selected_user }}" class="sb-item {% if active_tab=='bookmarks' %}active{% endif %}">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      Bookmarks
+      {% if bookmarks %}<span class="sb-badge">{{ bookmarks|length }}</span>{% endif %}
+    </a>
+
+    <div class="sb-section">Insights</div>
+    <a href="/analytics?user_id={{ selected_user }}" class="sb-item {% if active_tab=='analytics' %}active{% endif %}">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+      Analytics
+    </a>
+
+    <div class="sb-section">Workspace</div>
+    <a href="#" onclick="showTab('upload');return false" class="sb-item {% if active_tab=='upload' %}active{% endif %}">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+      Upload & Index
+    </a>
+
+    {% if recent_docs %}
+    <div class="sb-section" style="margin-top:8px">Recent</div>
+    {% for doc in recent_docs[:4] %}
+    <a href="/documents/{{ doc.id }}?user_id={{ selected_user }}" class="recent-row">
+      <div class="ft ft-{{ doc.file_type }}">{{ doc.file_type[:3] }}</div>
+      <div style="min-width:0">
+        <div class="recent-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ doc.title }}</div>
+        <div class="recent-meta">{{ doc.department }}</div>
+      </div>
+    </a>
+    {% endfor %}
+    {% endif %}
+  </nav>
+
+  <div class="sb-foot">
+    <div class="sb-status">
+      <div class="sb-dot"></div>
+      <div class="sb-status-text">{{ stats.documents }} files indexed</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ──────────────────────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="topbar-search">
+      <svg class="topbar-search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="topbar-q" class="topbar-input" placeholder="Search documents… (press /)" autocomplete="off"
+        value="{{ query }}" onkeydown="handleTopbarKey(event)" oninput="liveSearch(this.value)">
+      <div class="ac-dropdown" id="ac-drop"></div>
+    </div>
+    <span class="kbd">/</span>
+    <div class="topbar-right">
+      <select class="finput" id="user-switcher" style="width:auto;padding:5px 10px;font-size:12px;" onchange="switchUser(this.value)">
+        {% for u in users %}
+        <option value="{{ u.id }}" {% if selected_user==u.id %}selected{% endif %}>{{ u.name }} ({{ u.department }})</option>
+        {% endfor %}
+      </select>
+    </div>
+  </header>
+
+  <div class="body">
+
+  <!-- ══ SEARCH TAB ════════════════════════════════════════════════════════ -->
+  <div id="tab-search" class="tab-pane" {% if active_tab!='search' %}style="display:none"{% endif %}>
+
+    {% if not query %}
+    <!-- Hero state -->
+    <div class="hero">
+      <div class="hero-badge">✦ AI-Powered Retrieval</div>
+      <h1>Find anything in your<br><span>workspace instantly</span></h1>
+      <p>Context-aware search across all company documents — ranked by relevance, your department, and access history. With AI-synthesised answers.</p>
+      <div class="hero-search">
+        <form method="post" action="/search" id="hero-form">
+          <input type="hidden" name="user_id" value="{{ selected_user }}">
+          <input type="hidden" name="department" value="All">
+          <input type="hidden" name="file_type" value="All">
+          <input name="query" id="hero-q" class="hero-input" placeholder="Try: budget review, leave policy, server migration…" autocomplete="off" oninput="liveSearch(this.value)">
+          <button type="submit" class="hero-btn">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            Search
+          </button>
+        </form>
+      </div>
+      <div class="hero-hints">
+        <span class="hero-hint">Try:</span>
+        {% for q in ['budget review','leave policy','server migration','campaign brief','expense policy','onboarding','security incident'] %}
+        <span class="hero-hint-chip" onclick="fillSearch('{{ q }}')">{{ q }}</span>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--stat-clr:#4f46e5"><div class="stat-lbl">Indexed Files</div><div class="stat-val">{{ stats.documents }}</div><div class="stat-sub">across all departments</div></div>
+      <div class="stat-card" style="--stat-clr:#059669"><div class="stat-lbl">Searches Run</div><div class="stat-val">{{ stats.searches }}</div><div class="stat-sub">total queries</div></div>
+      <div class="stat-card" style="--stat-clr:#7c3aed"><div class="stat-lbl">File Opens</div><div class="stat-val">{{ stats.access_logs }}</div><div class="stat-sub">access events logged</div></div>
+      <div class="stat-card" style="--stat-clr:#d97706"><div class="stat-lbl">Bookmarked</div><div class="stat-val">{{ bookmarks|length }}</div><div class="stat-sub">saved by you</div></div>
+    </div>
+
+    <!-- Tag cloud + bookmarks -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Browse by topic</div></div>
+        <div class="card-body">
+          {% if tag_cloud %}
+          <div class="tag-cloud">
+            {% for tag, count in tag_cloud %}
+            <span class="tag-chip" onclick="fillSearch('{{ tag }}')">{{ tag }} <span style="opacity:.5;font-size:10px">{{ count }}</span></span>
+            {% endfor %}
+          </div>
+          {% else %}
+          <p style="color:var(--text-4);font-size:13px">Scan a folder to populate tags.</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Your bookmarks</div><a href="/bookmarks?user_id={{ selected_user }}" style="font-size:11.5px;color:var(--accent)">See all</a></div>
+        <div class="card-body">
+          {% if bookmarks %}
+          {% for b in bookmarks[:4] %}
+          <a href="/documents/{{ b.id }}?user_id={{ selected_user }}" class="recent-row">
+            <div class="ft ft-{{ b.file_type }}">{{ b.file_type[:3] }}</div>
+            <div style="min-width:0"><div class="recent-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ b.title }}</div><div class="recent-meta">{{ b.department }}</div></div>
+          </a>
+          {% endfor %}
+          {% else %}
+          <p style="color:var(--text-4);font-size:13px">Star any document to bookmark it.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- Results state -->
+    {% if message %}
+    <div class="banner {{ message_type }}">{% if message_type=='success' %}✓{% else %}ℹ{% endif %} {{ message }}</div>
+    {% endif %}
+
+    <div class="search-layout">
+      <!-- Filter sidebar -->
+      <aside class="search-panel">
+        <div class="card">
+          <div class="card-head"><div class="card-title">Refine search</div></div>
+          <div class="card-body">
+            <form method="post" action="/search">
+              <div class="fg">
+                <label class="flbl">User profile</label>
+                <select name="user_id" class="fselect">
+                  {% for u in users %}
+                  <option value="{{ u.id }}" {% if selected_user==u.id %}selected{% endif %}>{{ u.name }} · {{ u.department }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="fg2">
+                <div class="fg" style="margin:0">
+                  <label class="flbl">Department</label>
+                  <select name="department" class="fselect">
+                    <option {% if selected_department=='All' %}selected{% endif %}>All</option>
+                    {% for d in departments %}<option value="{{ d }}" {% if selected_department==d %}selected{% endif %}>{{ d }}</option>{% endfor %}
+                  </select>
+                </div>
+                <div class="fg" style="margin:0">
+                  <label class="flbl">File type</label>
+                  <select name="file_type" class="fselect">
+                    <option {% if selected_file_type=='All' %}selected{% endif %}>All</option>
+                    {% for ft in file_types %}<option value="{{ ft }}" {% if selected_file_type==ft %}selected{% endif %}>.{{ ft|upper }}</option>{% endfor %}
+                  </select>
+                </div>
+              </div>
+              <div class="fg">
+                <label class="flbl">Query</label>
+                <input name="query" class="finput" value="{{ query }}" required>
+              </div>
+              <button type="submit" class="btn btn-primary btn-full">Search again</button>
+            </form>
+            {% if suggestions %}
+            <div class="divider"></div>
+            <div style="font-size:10.5px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Suggestions</div>
+            <div class="chips">
+              {% for s in suggestions %}<span class="chip" onclick="fillSearch('{{ s }}')">{{ s }}</span>{% endfor %}
+            </div>
+            {% endif %}
+
+            {% if tag_cloud %}
+            <div class="divider"></div>
+            <div style="font-size:10.5px;font-weight:700;color:var(--text-4);text-transform:uppercase;letter-spacing:.05em;margin-bottom:7px">Topics</div>
+            <div class="tag-cloud">
+              {% for tag, cnt in tag_cloud[:10] %}<span class="tag-chip" onclick="fillSearch('{{ tag }}')">{{ tag }}</span>{% endfor %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+      </aside>
+
+      <!-- Results column -->
+      <main>
+        {% if ai_answer %}
+        <div class="ai-card fade-in">
+          <div class="ai-header">
+            <div class="ai-badge">✦ AI Answer</div>
+            <span class="ai-model">Claude Sonnet · synthesised from top results</span>
+          </div>
+          <div class="ai-text">{{ ai_answer }}</div>
+          <div class="ai-note">📎 Citations [1][2][3] refer to ranked results below</div>
+        </div>
+        {% endif %}
+
+        {% if results %}
+        {% for doc in results %}
+        <article class="result-card fade-in" id="rc-{{ doc.id }}">
+          <div class="result-rank">Score {{ doc.score }}</div>
+          <div class="result-title"><a href="/documents/{{ doc.id }}?user_id={{ selected_user }}">{{ doc.title }}</a></div>
+          <div class="result-path">{{ doc.path }}</div>
+          <div class="result-snippet">{{ doc.snippet|safe }}</div>
+          <div class="result-expl">
+            <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            {{ doc.explanation }}
+          </div>
+          <div class="result-meta">
+            <span class="badge b-blue">{{ doc.department }}</span>
+            <span class="badge b-gray">.{{ doc.file_type }}</span>
+            <span class="badge b-gray">{{ doc.size_label }}</span>
+            {% for t in doc.tags.split(',') %}<span class="badge b-violet">{{ t.strip() }}</span>{% endfor %}
+            <span class="badge b-gray">{{ doc.modified_at[:10] }}</span>
+          </div>
+          <div class="result-actions">
+            <a href="/documents/{{ doc.id }}?user_id={{ selected_user }}" class="btn btn-primary btn-sm">Preview</a>
+            <a href="{{ doc.open_uri }}" class="btn btn-secondary btn-sm">Open file</a>
+            <button class="star-btn {% if doc.bookmarked %}starred{% endif %}" onclick="toggleBookmark({{ doc.id }},this)" title="Bookmark">
+              <svg width="13" height="13" fill="{% if doc.bookmarked %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              {% if doc.bookmarked %}Saved{% else %}Save{% endif %}
+            </button>
+            <button class="copy-btn" onclick="copySnippet(this,'{{ doc.snippet|replace("'","\\'")|replace("<mark>","")|replace("</mark>","")|striptags|truncate(200)|replace("\n"," ") }}')" title="Copy snippet">
+              <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              Copy
+            </button>
+            <span class="why-toggle" onclick="toggleWhy({{ doc.id }})">Why this result? ▾</span>
+          </div>
+          <div id="why-{{ doc.id }}" style="display:none">
+            <div class="why-grid">
+              <div class="why-stat"><label>Keyword hits</label><strong>{{ doc.debug.query_matches }}</strong></div>
+              <div class="why-stat"><label>BM25 score</label><strong>{{ doc.debug.relevance_score }}</strong></div>
+              <div class="why-stat"><label>Profile fit</label><strong>{{ doc.debug.profile_boost }}</strong></div>
+              <div class="why-stat"><label>Freshness</label><strong>{{ doc.debug.freshness_boost }}</strong></div>
+              <div class="why-stat"><label>History</label><strong>{{ doc.debug.history_boost }}</strong></div>
+            </div>
+          </div>
+        </article>
+        {% endfor %}
+        {% else %}
+        <div class="empty">
+          <div class="empty-icon">🔍</div>
+          <div class="empty-title">No results for "{{ query }}"</div>
+          <div class="empty-text">Try broader terms or scan a folder to add more documents.</div>
+        </div>
+        {% endif %}
+      </main>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ══ BROWSE TAB ════════════════════════════════════════════════════════ -->
+  <div id="tab-browse" class="tab-pane" {% if active_tab!='browse' %}style="display:none"{% endif %}>
+    <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:800;letter-spacing:-.02em">Browse Files</div><div style="font-size:13px;color:var(--text-3);margin-top:2px">All indexed documents — filter by department or type</div></div>
+    <div class="card" style="margin-bottom:14px"><div class="card-body" style="padding:12px 16px">
+      <form method="get" action="/browse" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+        <input type="hidden" name="user_id" value="{{ selected_user }}">
+        <div class="fg" style="margin:0;min-width:150px"><label class="flbl">Department</label><select name="department" class="fselect" onchange="this.form.submit()"><option {% if selected_department=='All' %}selected{% endif %}>All</option>{% for d in departments %}<option value="{{ d }}" {% if selected_department==d %}selected{% endif %}>{{ d }}</option>{% endfor %}</select></div>
+        <div class="fg" style="margin:0;min-width:130px"><label class="flbl">File type</label><select name="file_type" class="fselect" onchange="this.form.submit()"><option {% if selected_file_type=='All' %}selected{% endif %}>All</option>{% for ft in file_types %}<option value="{{ ft }}" {% if selected_file_type==ft %}selected{% endif %}>.{{ ft|upper }}</option>{% endfor %}</select></div>
+      </form>
+    </div></div>
+    <div class="card">
+      {% if browse_docs %}
+      <div style="overflow-x:auto">
+        <table class="btable">
+          <thead><tr><th>Type</th><th>Title</th><th>Department</th><th>Tags</th><th>Size</th><th>Modified</th><th></th></tr></thead>
+          <tbody>
+            {% for doc in browse_docs %}
+            <tr>
+              <td><div class="ft ft-{{ doc.file_type }}">{{ doc.file_type[:3] }}</div></td>
+              <td><a href="/documents/{{ doc.id }}?user_id={{ selected_user }}">{{ doc.title }}</a></td>
+              <td><span class="badge b-blue">{{ doc.department }}</span></td>
+              <td style="color:var(--text-4);font-size:11.5px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ doc.tags }}</td>
+              <td style="color:var(--text-4);font-size:12px">{{ doc.size_label }}</td>
+              <td style="color:var(--text-4);font-size:12px">{{ doc.modified_at[:10] }}</td>
+              <td>
+                <div style="display:flex;gap:6px;align-items:center">
+                  <a href="/documents/{{ doc.id }}?user_id={{ selected_user }}" class="btn btn-secondary btn-sm">Open</a>
+                  <button class="btn-icon btn-ghost star-btn {% if doc.bookmarked %}starred{% endif %}" onclick="toggleBookmark({{ doc.id }},this)" title="Bookmark">
+                    <svg width="13" height="13" fill="{% if doc.bookmarked %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="card-body"><div class="empty" style="padding:32px 20px"><div class="empty-icon">📁</div><div class="empty-title">No documents yet</div><div class="empty-text">Use Upload & Index to scan a workspace folder.</div></div></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ══ BOOKMARKS TAB ════════════════════════════════════════════════════ -->
+  <div id="tab-bookmarks" class="tab-pane" {% if active_tab!='bookmarks' %}style="display:none"{% endif %}>
+    <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:800;letter-spacing:-.02em">Bookmarks</div><div style="font-size:13px;color:var(--text-3);margin-top:2px">Documents you've saved for quick access</div></div>
+    {% if bookmarks %}
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">
+      {% for b in bookmarks %}
+      <div class="card" style="padding:16px 18px;transition:all .15s" onmouseover="this.style.boxShadow='var(--sh-md)'" onmouseout="this.style.boxShadow='var(--sh-xs)'">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <div class="ft ft-{{ b.file_type }}">{{ b.file_type[:3] }}</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;color:var(--text)">{{ b.title }}</div>
+              <span class="badge b-blue" style="margin-top:3px">{{ b.department }}</span>
+            </div>
+          </div>
+          <button class="star-btn starred" onclick="toggleBookmark({{ b.id }},this);this.closest('.card').style.opacity='.4'" title="Remove bookmark">
+            <svg width="13" height="13" fill="currentColor" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          </button>
+        </div>
+        <a href="/documents/{{ b.id }}?user_id={{ selected_user }}" class="btn btn-primary btn-sm btn-full" style="margin-top:8px">Open document</a>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card"><div class="card-body"><div class="empty"><div class="empty-icon">🔖</div><div class="empty-title">No bookmarks yet</div><div class="empty-text">Click the Save button on any search result or document to bookmark it for quick access.</div></div></div></div>
+    {% endif %}
+  </div>
+
+  <!-- ══ ANALYTICS TAB ═════════════════════════════════════════════════════ -->
+  <div id="tab-analytics" class="tab-pane" {% if active_tab!='analytics' %}style="display:none"{% endif %}>
+    <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:800;letter-spacing:-.02em">Analytics</div><div style="font-size:13px;color:var(--text-3);margin-top:2px">Search patterns, access logs, and indexing history</div></div>
+
+    <div class="stats-grid" style="margin-bottom:18px">
+      <div class="stat-card" style="--stat-clr:#4f46e5"><div class="stat-lbl">Total Documents</div><div class="stat-val">{{ stats.documents }}</div></div>
+      <div class="stat-card" style="--stat-clr:#059669"><div class="stat-lbl">Total Searches</div><div class="stat-val">{{ stats.searches }}</div></div>
+      <div class="stat-card" style="--stat-clr:#7c3aed"><div class="stat-lbl">File Opens</div><div class="stat-val">{{ stats.access_logs }}</div></div>
+      <div class="stat-card" style="--stat-clr:#d97706"><div class="stat-lbl">User Profiles</div><div class="stat-val">{{ stats.users }}</div></div>
+    </div>
+
+    <div class="ag2" style="margin-bottom:14px">
+      <div class="card"><div class="card-head"><div class="card-title">Files by department</div></div><div class="card-body">{% for r in stats.departments %}<div class="bar-row"><div class="bar-label">{{ r.department }}</div><div class="bar-track"><div class="bar-fill" style="width:{{ r.width }}%"></div></div><div class="bar-val">{{ r.count }}</div></div>{% endfor %}</div></div>
+      <div class="card"><div class="card-head"><div class="card-title">Files by type</div></div><div class="card-body">{% for r in stats.file_types %}<div class="bar-row"><div class="bar-label">.{{ r.file_type }}</div><div class="bar-track"><div class="bar-fill g" style="width:{{ r.width }}%"></div></div><div class="bar-val">{{ r.count }}</div></div>{% endfor %}</div></div>
+    </div>
+
+    <div class="ag2" style="margin-bottom:14px">
+      <div class="card"><div class="card-head"><div class="card-title">Most opened documents</div></div><div class="card-body">{% if stats.top_opened %}{% for r in stats.top_opened %}<div class="list-row"><div><div class="list-title">{{ r.title }}</div><div class="list-sub">{{ r.department }} · .{{ r.file_type }}</div></div><div class="list-val">{{ r.opens }}</div></div>{% endfor %}{% else %}<p style="color:var(--text-4);font-size:13px">Open documents to build activity data.</p>{% endif %}</div></div>
+      <div class="card"><div class="card-head"><div class="card-title">Recent searches</div></div><div class="card-body">{% if stats.recent_searches %}{% for r in stats.recent_searches %}<div class="list-row"><div><div class="list-title">"{{ r.query }}"</div><div class="list-sub">{{ r.name }} · {{ r.result_count }} result(s)</div></div></div>{% endfor %}{% else %}<p style="color:var(--text-4);font-size:13px">Run searches to see history.</p>{% endif %}</div></div>
+    </div>
+
+    <div class="ag2">
+      <div class="card"><div class="card-head"><div class="card-title">Indexing history</div></div><div class="card-body">{% if stats.scan_history %}{% for r in stats.scan_history %}<div style="display:grid;grid-template-columns:52px 1fr 80px;gap:10px;align-items:center;margin-bottom:8px"><div style="font-size:11px;font-weight:600;color:var(--text-4)">{{ r.label }}</div><div class="bar-track"><div class="bar-fill" style="width:{{ r.width }}%"></div></div><div style="font-size:11px;color:var(--text-4);text-align:right">{{ r.count }} files</div></div>{% endfor %}{% else %}<p style="color:var(--text-4);font-size:13px">Run a scan to see indexing history.</p>{% endif %}</div></div>
+      <div class="card"><div class="card-head"><div class="card-title">Last indexing run</div></div><div class="card-body">{% if stats.latest_run %}<p style="font-size:11.5px;color:var(--text-4);margin-bottom:12px;font-family:'JetBrains Mono',monospace">{{ stats.latest_run.workspace_path }}</p><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">{% for lbl,val in [('Scanned',stats.latest_run.scanned_count),('Added',stats.latest_run.inserted_count),('Updated',stats.latest_run.updated_count)] %}<div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--r);padding:10px;text-align:center"><div style="font-size:20px;font-weight:800;color:var(--text)">{{ val }}</div><div style="font-size:10.5px;color:var(--text-4)">{{ lbl }}</div></div>{% endfor %}</div><div style="display:flex;flex-wrap:wrap;gap:5px">{% for doc in stats.latest_docs %}<span style="background:var(--bg);border:1px solid var(--border);padding:3px 9px;border-radius:20px;font-size:11px;color:var(--text-2)">{{ doc.title }}</span>{% endfor %}</div>{% else %}<p style="color:var(--text-4);font-size:13px">No scan history yet.</p>{% endif %}</div></div>
+    </div>
+  </div>
+
+  <!-- ══ UPLOAD TAB ════════════════════════════════════════════════════════ -->
+  <div id="tab-upload" class="tab-pane" {% if active_tab!='upload' %}style="display:none"{% endif %}>
+    <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:800;letter-spacing:-.02em">Upload & Index</div><div style="font-size:13px;color:var(--text-3);margin-top:2px">Add documents to the search index</div></div>
+    {% if message %}<div class="banner {{ message_type }}">{% if message_type=='success' %}✓{% else %}✕{% endif %} {{ message }}</div>{% endif %}
+    <div class="ag2">
+      <div class="card"><div class="card-head"><div><div class="card-title">Upload files</div><div class="card-sub">Drag and drop or click to select</div></div></div><div class="card-body">
+        <form method="post" action="/upload" enctype="multipart/form-data">
+          <div class="upload-zone" onclick="document.getElementById('ufile').click()">
+            <label for="ufile"><div class="upload-icon">📎</div><div class="upload-title">Click to browse files</div><div class="upload-sub">TXT · MD · PDF · DOCX · CSV · JSON · PY</div></label>
+            <input type="file" id="ufile" name="files" multiple accept=".txt,.md,.pdf,.docx,.csv,.json,.py" onchange="showFiles(this)">
+          </div>
+          <div id="flist" style="margin:10px 0;display:none;font-size:12px;color:var(--text-3)"></div>
+          <button type="submit" class="btn btn-primary btn-full" style="margin-top:10px">Upload and index</button>
+        </form>
+      </div></div>
+      <div class="card"><div class="card-head"><div><div class="card-title">Scan folder</div><div class="card-sub">Index an entire directory recursively</div></div></div><div class="card-body">
+        <form method="post" action="/ingest">
+          <div class="fg"><label class="flbl">Folder path</label><input name="workspace" class="finput" value="{{ workspace_value }}" placeholder="workspace_docs or C:\Users\You\Documents"><div class="fhint">Relative paths work from the project root. Supported: TXT MD PDF DOCX CSV JSON PY</div></div>
+          <button type="submit" class="btn btn-full" style="background:#0f172a;color:#fff;border:none;padding:9px 16px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;font-family:inherit">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.08"/></svg>
+            Scan and rebuild index
+          </button>
+        </form>
+      </div></div>
+    </div>
+  </div>
+
+  </div><!-- /body -->
+</div><!-- /main -->
+</div><!-- /shell -->
+
+<script>
+// Tab switching
+function showTab(name) {
+  document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+  const t = document.getElementById('tab-' + name);
+  if (t) { t.style.display = ''; }
+}
+
+// Hero quick-fill
+function fillSearch(q) {
+  const hi = document.getElementById('hero-q');
+  const ti = document.getElementById('topbar-q');
+  if (hi) hi.value = q;
+  if (ti) ti.value = q;
+  // submit the hero form if visible
+  const hf = document.getElementById('hero-form');
+  if (hf) hf.submit();
+}
+
+// Switch user context
+function switchUser(uid) {
+  const url = new URL(window.location.href);
+  url.searchParams.set('user_id', uid);
+  window.location.href = url.toString();
+}
+
+// Keyboard shortcut: / focuses search
+document.addEventListener('keydown', e => {
+  if (e.key === '/' && !['INPUT','TEXTAREA'].includes(document.activeElement.tagName)) {
+    e.preventDefault();
+    const ti = document.getElementById('topbar-q');
+    if (ti) { ti.focus(); ti.select(); }
+  }
+  if (e.key === 'Escape') {
+    document.getElementById('ac-drop').classList.remove('open');
+  }
+});
+
+// Topbar keyboard handler
+function handleTopbarKey(e) {
+  if (e.key === 'Enter') {
+    document.getElementById('topbar-q').closest('form')?.submit();
+    // build and submit search
+    const q = e.target.value.trim();
+    if (!q) return;
+    const form = document.createElement('form');
+    form.method = 'POST'; form.action = '/search';
+    [['query', q], ['user_id', document.getElementById('user-switcher').value],
+     ['department','All'],['file_type','All']].forEach(([k,v]) => {
+      const inp = document.createElement('input');
+      inp.type='hidden'; inp.name=k; inp.value=v;
+      form.appendChild(inp);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+
+// Live autocomplete
+let acTimer;
+function liveSearch(val) {
+  clearTimeout(acTimer);
+  const drop = document.getElementById('ac-drop');
+  if (!val || val.length < 2) { drop.classList.remove('open'); return; }
+  acTimer = setTimeout(() => {
+    fetch('/api/search?q=' + encodeURIComponent(val) + '&user_id=' + document.getElementById('user-switcher').value)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.results?.length) { drop.classList.remove('open'); return; }
+        const FT_COLORS = {md:'#e0e7ff',txt:'#dcfce7',pdf:'#fee2e2',docx:'#dbeafe',csv:'#d1fae5',json:'#f3e8ff',py:'#fef9c3'};
+        const FT_TEXT   = {md:'#4f46e5',txt:'#16a34a',pdf:'#dc2626',docx:'#2563eb',csv:'#059669',json:'#7c3aed',py:'#ca8a04'};
+        drop.innerHTML = data.results.slice(0,6).map(r => `
+          <div class="ac-item" onclick="window.location='/documents/${r.id}?user_id=' + document.getElementById('user-switcher').value">
+            <div class="ac-icon" style="background:${FT_COLORS[r.file_type]||'#f1f5f9'};color:${FT_TEXT[r.file_type]||'#64748b'}">${r.file_type?.slice(0,3)||'doc'}</div>
+            <div>
+              <div class="ac-title">${r.title}</div>
+              <div class="ac-meta">${r.department} · score ${r.score}</div>
+            </div>
+          </div>`).join('');
+        drop.classList.add('open');
+      });
+  }, 280);
+}
+
+// Close dropdown on outside click
+document.addEventListener('click', e => {
+  if (!e.target.closest('.topbar-search')) document.getElementById('ac-drop').classList.remove('open');
+});
+
+// Toggle bookmark
+function toggleBookmark(docId, btn) {
+  const uid = document.getElementById('user-switcher').value;
+  const fd = new FormData();
+  fd.append('user_id', uid); fd.append('doc_id', docId);
+  fetch('/api/bookmark', { method:'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+      const svg = btn.querySelector('svg');
+      if (d.bookmarked) {
+        btn.classList.add('starred');
+        if (svg) svg.setAttribute('fill','currentColor');
+        const span = btn.querySelector('span') || btn;
+        if (btn.textContent.trim() === 'Save') btn.innerHTML = btn.innerHTML.replace('Save','Saved');
+      } else {
+        btn.classList.remove('starred');
+        if (svg) svg.setAttribute('fill','none');
+        if (btn.textContent.trim().includes('Saved')) btn.innerHTML = btn.innerHTML.replace('Saved','Save');
+      }
+    });
+}
+
+// Toggle why breakdown
+function toggleWhy(id) {
+  const el = document.getElementById('why-' + id);
+  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+// Copy snippet
+function copySnippet(btn, text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Copied!';
+    btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 1800);
+  });
+}
+
+// Show uploaded file names
+function showFiles(input) {
+  const el = document.getElementById('flist');
+  if (input.files.length) {
+    el.style.display = '';
+    el.innerHTML = Array.from(input.files).map(f =>
+      `<span style="background:var(--bg);border:1px solid var(--border);padding:2px 8px;border-radius:20px;margin:2px;display:inline-block">${f.name}</span>`).join('');
+  }
+}
+
+// Export CSV
+function exportCSV() {
+  const rows = [['Title','Department','File Type','Score','Path']];
+  document.querySelectorAll('.result-card').forEach(c => {
+    const title = c.querySelector('.result-title a')?.textContent?.trim() || '';
+    const path  = c.querySelector('.result-path')?.textContent?.trim() || '';
+    const score = c.querySelector('.result-rank')?.textContent?.replace('Score ','').trim() || '';
+    const dept  = c.querySelector('.badge.b-blue')?.textContent?.trim() || '';
+    const ft    = c.querySelectorAll('.badge')[1]?.textContent?.trim() || '';
+    if (title) rows.push([title, dept, ft, score, path]);
+  });
+  const csv = rows.map(r => r.map(v => `"${v.replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], {type:'text/csv'}));
+  a.download = 'docsearch_results.csv'; a.click();
+}
+</script>
+</body>
+</html>

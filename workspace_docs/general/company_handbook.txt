@@ -1,0 +1,39 @@
+EMPLOYEE HANDBOOK — SUMMARY
+Effective Date: January 2025 | HR Department
+
+WORKING HOURS
+Standard hours are 9:00 AM to 6:00 PM, Monday to Friday.
+Flexible working arrangements require manager approval in writing.
+Remote work up to 2 days per week is permitted after 3 months of employment.
+
+LEAVE POLICY (Summary — see hr/leave_policy.txt for full details)
+Annual Leave: 18 days per calendar year
+Sick Leave: 10 days per year (medical certificate required after 3 consecutive days)
+Casual Leave: 5 days per year (max 2 consecutive days)
+Public Holidays: As per government gazette
+
+CODE OF CONDUCT
+All employees are expected to maintain professional behaviour at all times.
+Harassment, discrimination, and bullying are grounds for immediate termination.
+Confidential company information must not be shared externally without approval.
+
+PERFORMANCE REVIEWS
+Formal reviews are conducted bi-annually (June and December).
+Mid-cycle check-ins are encouraged with direct managers.
+Promotion criteria are based on performance ratings, tenure, and role availability.
+
+EXPENSE CLAIMS
+All business expenses must be submitted within 30 days of incurrence.
+Receipts are required for any claim above PKR 500.
+Submit via the Finance portal or email finance@company.com.
+
+IT & DATA SECURITY
+Do not install unauthorised software on company devices.
+Use VPN when accessing company systems remotely.
+Report any security incidents immediately to IT (helpdesk@company.com).
+
+GRIEVANCE PROCEDURE
+Step 1: Raise informally with direct manager.
+Step 2: If unresolved, submit written complaint to HR within 7 days.
+Step 3: HR investigates and provides written response within 14 working days.
+Step 4: Escalate to senior management panel if unresolved.

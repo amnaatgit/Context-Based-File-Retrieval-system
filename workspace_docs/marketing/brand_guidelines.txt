@@ -1,0 +1,32 @@
+BRAND GUIDELINES — INTERNAL REFERENCE
+Version 2.3 | Updated March 2025
+
+PRIMARY COLOURS
+- Indigo 600: #4F46E5 (primary brand)
+- Emerald 500: #10B981 (success states)
+- Slate 900: #0F172A (body text)
+
+TYPOGRAPHY
+- Headings: Inter Bold (700 weight)
+- Body: Inter Regular (400 weight)
+- Monospace: JetBrains Mono
+
+TONE OF VOICE
+Professional yet approachable. Avoid jargon. Lead with value, not features.
+Always use active voice. Keep sentences under 20 words where possible.
+
+LOGO USAGE
+Never stretch, rotate, or recolour the logo.
+Minimum size: 32px height in digital contexts.
+Clear space: equal to the height of the logo mark on all sides.
+
+DO NOT USE
+- Clipart or stock photo people
+- Comic Sans or decorative fonts
+- More than 3 colours in a single graphic
+- All-caps body text
+
+SOCIAL MEDIA STANDARDS
+LinkedIn: Formal, data-driven, case study focused
+Twitter/X: Conversational, quick tips, company news
+Instagram: Behind the scenes, team culture, visual product shots

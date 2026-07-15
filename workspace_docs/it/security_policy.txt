@@ -1,0 +1,42 @@
+IT SECURITY POLICY
+IT Department | Version 3.1 | March 2025
+
+PASSWORD POLICY
+- Minimum 12 characters
+- Must include uppercase, lowercase, number, and symbol
+- Change every 90 days
+- Do not reuse last 10 passwords
+- Multi-factor authentication required for all cloud systems
+
+ACCEPTABLE USE
+Company devices are for business use. Limited personal use is permitted.
+Do not download or install software without IT approval.
+Do not connect company devices to public WiFi without VPN.
+Screen lock must activate after 5 minutes of inactivity.
+
+DATA CLASSIFICATION
+CONFIDENTIAL: Financial records, HR data, client contracts
+INTERNAL: Project documents, meeting notes, internal emails
+PUBLIC: Marketing materials, published reports, press releases
+
+Never share CONFIDENTIAL data externally without written authorisation.
+
+INCIDENT REPORTING
+Report security incidents IMMEDIATELY to: security@company.com
+Include: date/time, systems affected, description of incident
+Do not attempt to investigate or resolve incidents independently
+
+REMOTE ACCESS
+Use company VPN for all remote connections
+Approved tools: Slack, Google Workspace, internal systems only
+Personal cloud storage (Dropbox, personal Google Drive) not permitted for company files
+
+DEVICE MANAGEMENT
+Lost or stolen devices must be reported within 2 hours
+IT will remotely wipe all data from reported lost devices
+Do not attempt to repair company hardware independently
+
+COMPLIANCE
+This policy aligns with ISO 27001 guidelines.
+Violations may result in disciplinary action up to termination.
+Annual security training is mandatory for all staff.

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ doc.title }} — DocSearch</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-icon">🔍</div>
+      <div><div class="sb-brand">DocSearch</div><div class="sb-sub">Enterprise Retrieval</div></div>
+    </div>
+    <nav class="sb-nav">
+      <a href="/?user_id={{ user_id }}" class="sb-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>Search</a>
+      <a href="/browse?user_id={{ user_id }}" class="sb-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>Browse Files</a>
+      <a href="/bookmarks?user_id={{ user_id }}" class="sb-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>Bookmarks</a>
+      <a href="/analytics?user_id={{ user_id }}" class="sb-item"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Analytics</a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <a href="javascript:history.back()" class="btn btn-secondary btn-sm">← Back</a>
+      <span style="font-size:13px;color:var(--text-3)">Document Preview</span>
+      <div class="topbar-right">
+        <button class="btn btn-secondary btn-sm star-btn {% if bookmarked %}starred{% endif %}" id="bm-btn" onclick="toggleBm()">
+          <svg id="bm-svg" width="13" height="13" fill="{% if bookmarked %}currentColor{% else %}none{% endif %}" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="m19 21-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+          <span id="bm-lbl">{% if bookmarked %}Saved{% else %}Save{% endif %}</span>
+        </button>
+        <a href="{{ doc.open_uri }}" class="btn btn-primary btn-sm">Open original file</a>
+      </div>
+    </header>
+
+    <div class="body">
+      <div style="display:grid;grid-template-columns:1fr 280px;gap:18px;align-items:start">
+
+        <!-- Main content -->
+        <div>
+          <div class="card" style="padding:22px 26px;margin-bottom:14px">
+            <div style="display:flex;align-items:flex-start;gap:14px;margin-bottom:14px">
+              <div class="ft ft-{{ doc.file_type }}" style="width:42px;height:42px;font-size:11px;border-radius:10px;flex-shrink:0">{{ doc.file_type[:3] }}</div>
+              <div style="flex:1;min-width:0">
+                <h1 style="font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.025em;margin-bottom:5px">{{ doc.title }}</h1>
+                <div style="font-size:11.5px;color:var(--text-4);font-family:'JetBrains Mono',monospace;word-break:break-all">{{ doc.path }}</div>
+              </div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px">
+              <span class="badge b-blue">{{ doc.department }}</span>
+              <span class="badge b-gray">.{{ doc.file_type }}</span>
+              <span class="badge b-gray">{{ doc.size_label }}</span>
+              {% for t in doc.tags.split(',') %}<span class="badge b-violet">{{ t.strip() }}</span>{% endfor %}
+              <span class="badge b-gray">Modified {{ doc.modified_at[:10] }}</span>
+            </div>
+            <div style="display:flex;gap:8px">
+              <a href="{{ doc.open_uri }}" class="btn btn-primary btn-sm">Open in app</a>
+              <a href="/?user_id={{ user_id }}" class="btn btn-secondary btn-sm">New search</a>
+              <button class="btn btn-secondary btn-sm" onclick="copyAll()">Copy content</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-head">
+              <div class="card-title">Document content</div>
+              <span class="badge b-gray">{{ doc.size_label }}</span>
+            </div>
+            <div class="card-body" style="padding:20px 22px">
+              <pre id="doc-content" style="white-space:pre-wrap;font-family:'Inter',system-ui,sans-serif;font-size:13.5px;line-height:1.85;color:var(--text-2);max-height:65vh;overflow-y:auto">{{ doc.content }}</pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related -->
+        <div style="position:sticky;top:70px">
+          <div class="card">
+            <div class="card-head"><div class="card-title">Related documents</div></div>
+            <div class="card-body">
+              {% if related %}
+              {% for r in related %}
+              <a href="/documents/{{ r.id }}?user_id={{ user_id }}" class="recent-row">
+                <div class="ft ft-{{ r.file_type }}">{{ r.file_type[:3] }}</div>
+                <div style="min-width:0">
+                  <div class="recent-title" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.title }}</div>
+                  <div class="recent-meta">{{ r.department }} · score {{ r.score }}</div>
+                </div>
+              </a>
+              {% endfor %}
+              {% else %}
+              <p style="font-size:13px;color:var(--text-4)">No related documents found.</p>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="card" style="margin-top:12px">
+            <div class="card-head"><div class="card-title">File metadata</div></div>
+            <div class="card-body">
+              {% for label, value in [
+                ('Department', doc.department),
+                ('File type', '.' + doc.file_type),
+                ('Size', doc.size_label),
+                ('Modified', doc.modified_at[:10]),
+                ('Indexed', doc.indexed_at[:10]),
+                ('Author', doc.author),
+              ] %}
+              <div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border-soft)">
+                <span style="font-size:11.5px;color:var(--text-4);font-weight:600">{{ label }}</span>
+                <span style="font-size:11.5px;color:var(--text-2)">{{ value }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function toggleBm() {
+  const fd = new FormData();
+  fd.append('user_id', {{ user_id }});
+  fd.append('doc_id', {{ doc.id }});
+  fetch('/api/bookmark', { method:'POST', body:fd })
+    .then(r => r.json())
+    .then(d => {
+      const btn = document.getElementById('bm-btn');
+      const svg = document.getElementById('bm-svg');
+      const lbl = document.getElementById('bm-lbl');
+      if (d.bookmarked) {
+        btn.classList.add('starred'); svg.setAttribute('fill','currentColor'); lbl.textContent = 'Saved';
+      } else {
+        btn.classList.remove('starred'); svg.setAttribute('fill','none'); lbl.textContent = 'Save';
+      }
+    });
+}
+
+function copyAll() {
+  const text = document.getElementById('doc-content').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    btn.textContent = '✓ Copied!'; btn.style.color = 'var(--green)';
+    setTimeout(() => { btn.textContent = 'Copy content'; btn.style.color = ''; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
