@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>DocSearch — Enterprise File Retrieval</title>
+  <title>DocSearch â Enterprise File Retrieval</title>
   <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
 <div class="shell">
 
-<!-- ── SIDEBAR ──────────────────────────────────────────────────────────── -->
+<!-- ââ SIDEBAR ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
 <aside class="sidebar">
   <div class="sb-logo">
-    <div class="sb-icon">🔍</div>
+    <div class="sb-icon">ð</div>
     <div>
       <div class="sb-brand">DocSearch</div>
       <div class="sb-sub">Enterprise Retrieval</div>
@@ -70,14 +70,14 @@
   </div>
 </aside>
 
-<!-- ── MAIN ──────────────────────────────────────────────────────────────── -->
+<!-- ââ MAIN ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
 <div class="main">
 
   <!-- Topbar -->
   <header class="topbar">
     <div class="topbar-search">
       <svg class="topbar-search-icon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-      <input id="topbar-q" class="topbar-input" placeholder="Search documents… (press /)" autocomplete="off"
+      <input id="topbar-q" class="topbar-input" placeholder="Search documentsâ¦ (press /)" autocomplete="off"
         value="{{ query }}" onkeydown="handleTopbarKey(event)" oninput="liveSearch(this.value)">
       <div class="ac-dropdown" id="ac-drop"></div>
     </div>
@@ -93,21 +93,21 @@
 
   <div class="body">
 
-  <!-- ══ SEARCH TAB ════════════════════════════════════════════════════════ -->
+  <!-- ââ SEARCH TAB ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
   <div id="tab-search" class="tab-pane" {% if active_tab!='search' %}style="display:none"{% endif %}>
 
     {% if not query %}
     <!-- Hero state -->
     <div class="hero">
-      <div class="hero-badge">✦ AI-Powered Retrieval</div>
+      <div class="hero-badge">â¦ AI-Powered Retrieval</div>
       <h1>Find anything in your<br><span>workspace instantly</span></h1>
-      <p>Context-aware search across all company documents — ranked by relevance, your department, and access history. With AI-synthesised answers.</p>
+      <p>Context-aware search across all company documents â ranked by relevance, your department, and access history. With AI-synthesised answers.</p>
       <div class="hero-search">
         <form method="post" action="/search" id="hero-form">
           <input type="hidden" name="user_id" value="{{ selected_user }}">
           <input type="hidden" name="department" value="All">
           <input type="hidden" name="file_type" value="All">
-          <input name="query" id="hero-q" class="hero-input" placeholder="Try: budget review, leave policy, server migration…" autocomplete="off" oninput="liveSearch(this.value)">
+          <input name="query" id="hero-q" class="hero-input" placeholder="Try: budget review, leave policy, server migrationâ¦" autocomplete="off" oninput="liveSearch(this.value)">
           <button type="submit" class="hero-btn">
             <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             Search
@@ -166,7 +166,7 @@
     {% else %}
     <!-- Results state -->
     {% if message %}
-    <div class="banner {{ message_type }}">{% if message_type=='success' %}✓{% else %}ℹ{% endif %} {{ message }}</div>
+    <div class="banner {{ message_type }}">{% if message_type=='success' %}â{% else %}â¹{% endif %} {{ message }}</div>
     {% endif %}
 
     <div class="search-layout">
@@ -180,7 +180,7 @@
                 <label class="flbl">User profile</label>
                 <select name="user_id" class="fselect">
                   {% for u in users %}
-                  <option value="{{ u.id }}" {% if selected_user==u.id %}selected{% endif %}>{{ u.name }} · {{ u.department }}</option>
+                  <option value="{{ u.id }}" {% if selected_user==u.id %}selected{% endif %}>{{ u.name }} Â· {{ u.department }}</option>
                   {% endfor %}
                 </select>
               </div>
@@ -230,15 +230,18 @@
         {% if ai_answer %}
         <div class="ai-card fade-in">
           <div class="ai-header">
-            <div class="ai-badge">✦ AI Answer</div>
-            <span class="ai-model">Claude Sonnet · synthesised from top results</span>
+            <div class="ai-badge">â¦ AI Answer</div>
+            <span class="ai-model">Claude Sonnet Â· synthesised from top results</span>
           </div>
           <div class="ai-text">{{ ai_answer }}</div>
-          <div class="ai-note">📎 Citations [1][2][3] refer to ranked results below</div>
+          <div class="ai-note">ð Citations [1][2][3] refer to ranked results below</div>
         </div>
         {% endif %}
 
         {% if results %}
+        <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="exportCSV()" title="Download these results as CSV">⬇ Export CSV</button>
+        </div>
         {% for doc in results %}
         <article class="result-card fade-in" id="rc-{{ doc.id }}">
           <div class="result-rank">Score {{ doc.score }}</div>
@@ -267,7 +270,7 @@
               <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               Copy
             </button>
-            <span class="why-toggle" onclick="toggleWhy({{ doc.id }})">Why this result? ▾</span>
+            <span class="why-toggle" onclick="toggleWhy({{ doc.id }})">Why this result? â¾</span>
           </div>
           <div id="why-{{ doc.id }}" style="display:none">
             <div class="why-grid">
@@ -282,7 +285,7 @@
         {% endfor %}
         {% else %}
         <div class="empty">
-          <div class="empty-icon">🔍</div>
+          <div class="empty-icon">ð</div>
           <div class="empty-title">No results for "{{ query }}"</div>
           <div class="empty-text">Try broader terms or scan a folder to add more documents.</div>
         </div>
@@ -292,9 +295,9 @@
     {% endif %}
   </div>
 
-  <!-- ══ BROWSE TAB ════════════════════════════════════════════════════════ -->
+  <!-- ââ BROWSE TAB ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
   <div id="tab-browse" class="tab-pane" {% if active_tab!='browse' %}style="display:none"{% endif %}>
-    <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:800;letter-spacing:-.02em">Browse Files</div><div style="font-size:13px;color:var(--text-3);margin-top:2px">All indexed documents — filter by department or type</div></div>
+    <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:800;letter-spacing:-.02em">Browse Files</div><div style="font-size:13px;color:var(--text-3);margin-top:2px">All indexed documents â filter by department or type</div></div>
     <div class="card" style="margin-bottom:14px"><div class="card-body" style="padding:12px 16px">
       <form method="get" action="/browse" style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
         <input type="hidden" name="user_id" value="{{ selected_user }}">
@@ -330,12 +333,12 @@
         </table>
       </div>
       {% else %}
-      <div class="card-body"><div class="empty" style="padding:32px 20px"><div class="empty-icon">📁</div><div class="empty-title">No documents yet</div><div class="empty-text">Use Upload & Index to scan a workspace folder.</div></div></div>
+      <div class="card-body"><div class="empty" style="padding:32px 20px"><div class="empty-icon">ð</div><div class="empty-title">No documents yet</div><div class="empty-text">Use Upload & Index to scan a workspace folder.</div></div></div>
       {% endif %}
     </div>
   </div>
 
-  <!-- ══ BOOKMARKS TAB ════════════════════════════════════════════════════ -->
+  <!-- ââ BOOKMARKS TAB ââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
   <div id="tab-bookmarks" class="tab-pane" {% if active_tab!='bookmarks' %}style="display:none"{% endif %}>
     <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:800;letter-spacing:-.02em">Bookmarks</div><div style="font-size:13px;color:var(--text-3);margin-top:2px">Documents you've saved for quick access</div></div>
     {% if bookmarks %}
@@ -359,11 +362,11 @@
       {% endfor %}
     </div>
     {% else %}
-    <div class="card"><div class="card-body"><div class="empty"><div class="empty-icon">🔖</div><div class="empty-title">No bookmarks yet</div><div class="empty-text">Click the Save button on any search result or document to bookmark it for quick access.</div></div></div></div>
+    <div class="card"><div class="card-body"><div class="empty"><div class="empty-icon">ð</div><div class="empty-title">No bookmarks yet</div><div class="empty-text">Click the Save button on any search result or document to bookmark it for quick access.</div></div></div></div>
     {% endif %}
   </div>
 
-  <!-- ══ ANALYTICS TAB ═════════════════════════════════════════════════════ -->
+  <!-- ââ ANALYTICS TAB âââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
   <div id="tab-analytics" class="tab-pane" {% if active_tab!='analytics' %}style="display:none"{% endif %}>
     <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:800;letter-spacing:-.02em">Analytics</div><div style="font-size:13px;color:var(--text-3);margin-top:2px">Search patterns, access logs, and indexing history</div></div>
 
@@ -380,8 +383,8 @@
     </div>
 
     <div class="ag2" style="margin-bottom:14px">
-      <div class="card"><div class="card-head"><div class="card-title">Most opened documents</div></div><div class="card-body">{% if stats.top_opened %}{% for r in stats.top_opened %}<div class="list-row"><div><div class="list-title">{{ r.title }}</div><div class="list-sub">{{ r.department }} · .{{ r.file_type }}</div></div><div class="list-val">{{ r.opens }}</div></div>{% endfor %}{% else %}<p style="color:var(--text-4);font-size:13px">Open documents to build activity data.</p>{% endif %}</div></div>
-      <div class="card"><div class="card-head"><div class="card-title">Recent searches</div></div><div class="card-body">{% if stats.recent_searches %}{% for r in stats.recent_searches %}<div class="list-row"><div><div class="list-title">"{{ r.query }}"</div><div class="list-sub">{{ r.name }} · {{ r.result_count }} result(s)</div></div></div>{% endfor %}{% else %}<p style="color:var(--text-4);font-size:13px">Run searches to see history.</p>{% endif %}</div></div>
+      <div class="card"><div class="card-head"><div class="card-title">Most opened documents</div></div><div class="card-body">{% if stats.top_opened %}{% for r in stats.top_opened %}<div class="list-row"><div><div class="list-title">{{ r.title }}</div><div class="list-sub">{{ r.department }} Â· .{{ r.file_type }}</div></div><div class="list-val">{{ r.opens }}</div></div>{% endfor %}{% else %}<p style="color:var(--text-4);font-size:13px">Open documents to build activity data.</p>{% endif %}</div></div>
+      <div class="card"><div class="card-head"><div class="card-title">Recent searches</div></div><div class="card-body">{% if stats.recent_searches %}{% for r in stats.recent_searches %}<div class="list-row"><div><div class="list-title">"{{ r.query }}"</div><div class="list-sub">{{ r.name }} Â· {{ r.result_count }} result(s)</div></div></div>{% endfor %}{% else %}<p style="color:var(--text-4);font-size:13px">Run searches to see history.</p>{% endif %}</div></div>
     </div>
 
     <div class="ag2">
@@ -390,15 +393,15 @@
     </div>
   </div>
 
-  <!-- ══ UPLOAD TAB ════════════════════════════════════════════════════════ -->
+  <!-- ââ UPLOAD TAB ââââââââââââââââââââââââââââââââââââââââââââââââââââââââ -->
   <div id="tab-upload" class="tab-pane" {% if active_tab!='upload' %}style="display:none"{% endif %}>
     <div style="margin-bottom:18px"><div style="font-size:20px;font-weight:800;letter-spacing:-.02em">Upload & Index</div><div style="font-size:13px;color:var(--text-3);margin-top:2px">Add documents to the search index</div></div>
-    {% if message %}<div class="banner {{ message_type }}">{% if message_type=='success' %}✓{% else %}✕{% endif %} {{ message }}</div>{% endif %}
+    {% if message %}<div class="banner {{ message_type }}">{% if message_type=='success' %}â{% else %}â{% endif %} {{ message }}</div>{% endif %}
     <div class="ag2">
       <div class="card"><div class="card-head"><div><div class="card-title">Upload files</div><div class="card-sub">Drag and drop or click to select</div></div></div><div class="card-body">
         <form method="post" action="/upload" enctype="multipart/form-data">
           <div class="upload-zone" onclick="document.getElementById('ufile').click()">
-            <label for="ufile"><div class="upload-icon">📎</div><div class="upload-title">Click to browse files</div><div class="upload-sub">TXT · MD · PDF · DOCX · CSV · JSON · PY</div></label>
+            <label for="ufile"><div class="upload-icon">ð</div><div class="upload-title">Click to browse files</div><div class="upload-sub">TXT Â· MD Â· PDF Â· DOCX Â· CSV Â· JSON Â· PY</div></label>
             <input type="file" id="ufile" name="files" multiple accept=".txt,.md,.pdf,.docx,.csv,.json,.py" onchange="showFiles(this)">
           </div>
           <div id="flist" style="margin:10px 0;display:none;font-size:12px;color:var(--text-3)"></div>
@@ -497,7 +500,7 @@ function liveSearch(val) {
             <div class="ac-icon" style="background:${FT_COLORS[r.file_type]||'#f1f5f9'};color:${FT_TEXT[r.file_type]||'#64748b'}">${r.file_type?.slice(0,3)||'doc'}</div>
             <div>
               <div class="ac-title">${r.title}</div>
-              <div class="ac-meta">${r.department} · score ${r.score}</div>
+              <div class="ac-meta">${r.department} Â· score ${r.score}</div>
             </div>
           </div>`).join('');
         drop.classList.add('open');
