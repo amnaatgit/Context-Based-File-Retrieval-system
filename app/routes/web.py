@@ -36,7 +36,7 @@ def get_recent(user_id: int, limit: int = 6):
     rows = conn.execute(
         '''SELECT DISTINCT d.id, d.title, d.department, d.file_type, a.created_at
            FROM access_logs a JOIN documents d ON d.id = a.document_id
-           WHERE a.user_id = ? ORDER BY a.id DESC LIMIT ?''',
+           WHERE a.user_id = ? ORDER BY a.created_at DESC LIMIT ?''',
         (user_id, limit)
     ).fetchall()
     conn.close()
