@@ -150,7 +150,7 @@ class RetrievalEngine:
         self.record_search(query, user_id, filters, len(results))
         return results
 
-    # ── RAG: AI-synthesised answer from top results ──────────────────────────
+    # ââ RAG: AI-synthesised answer from top results ââââââââââââââââââââââââââ
     def generate_ai_answer(self, query: str, results: List[dict]) -> Optional[str]:
         """
         Pass the top retrieved documents to Claude and generate a concise,
@@ -165,7 +165,7 @@ class RetrievalEngine:
             import anthropic
             client = anthropic.Anthropic(api_key=api_key)
 
-            # Build compact context from top 4 documents (≤ 1800 chars each)
+            # Build compact context from top 4 documents (â¤ 1800 chars each)
             context_parts = []
             for i, doc in enumerate(results[:4], 1):
                 chunk = doc['content'][:1800].replace('\n', ' ').strip()
@@ -202,6 +202,40 @@ ANSWER:"""
         enriched['size_label'] = self._size_label(enriched.get('size_bytes', 0))
         enriched['open_uri'] = self._file_uri(enriched['path'])
         return enriched
+
+    def related_documents(self, doc_id: int, limit: int = 4) -> List[dict]:
+        """Find related documents using shared tags, department, and file type overlap."""
+        self._ensure()
+        source = self.documents.get(doc_id)
+        if not source:
+            return []
+        source_tags = {t.strip().lower() for t in source['tags'].split(',') if t.strip()}
+        source_words = set(self.tokenize(source['title']))
+        scored = []
+        for other_id, other in self.documents.items():
+            if other_id == doc_id:
+                continue
+            score = 0.0
+            other_tags = {t.strip().lower() for t in other['tags'].split(',') if t.strip()}
+            score += len(source_tags & other_tags) * 2.0
+            if other['department'].lower() == source['department'].lower():
+                score += 1.5
+            if other['file_type'] == source['file_type']:
+                score += 0.5
+            score += len(source_words & set(self.tokenize(other['title']))) * 0.5
+            if score > 0:
+                scored.append((score, other_id, other))
+        scored.sort(key=lambda x: (-x[0], x[1]))
+        results = []
+        for score, other_id, other in scored[:limit]:
+            results.append({
+                'id': other_id,
+                'title': other['title'],
+                'department': other['department'],
+                'file_type': other['file_type'],
+                'score': round(score, 2),
+            })
+        return results
 
     def _bm25_score(self, query_terms: List[str], doc_id: int) -> float:
         total_docs = max(len(self.documents), 1)
@@ -266,7 +300,7 @@ ANSWER:"""
         for term in sorted(set(query_terms), key=len, reverse=True):
             pattern = re.compile(rf'({re.escape(term)})', re.IGNORECASE)
             snippet = pattern.sub(r'<mark>\1</mark>', snippet)
-        return snippet + ('…' if len(text) > pos + size else '')
+        return snippet + ('â¦' if len(text) > pos + size else '')
 
     def _size_label(self, size_bytes: int) -> str:
         if size_bytes < 1024:
@@ -285,7 +319,7 @@ ANSWER:"""
             reasons.append('recently modified')
         if debug.history_boost:
             reasons.append('in your access history')
-        return ' · '.join(reasons[:3]) or f"Relevant {doc['file_type'].upper()} document"
+        return ' Â· '.join(reasons[:3]) or f"Relevant {doc['file_type'].upper()} document"
 
     def record_click(self, user_id: int, doc_id: int) -> None:
         conn = get_connection()
