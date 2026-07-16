@@ -318,7 +318,7 @@ ANSWER:"""
         top_opened     = conn.execute(
             '''SELECT d.id, d.title, d.department, d.file_type, COUNT(*) AS opens
                FROM access_logs a JOIN documents d ON d.id = a.document_id
-               GROUP BY a.document_id ORDER BY opens DESC LIMIT 5'''
+               GROUP BY d.id, d.title, d.department, d.file_type ORDER BY opens DESC LIMIT 5'''
         ).fetchall()
         recent_searches = conn.execute(
             '''SELECT s.query, s.result_count, s.created_at, u.name, u.department
