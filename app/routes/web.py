@@ -15,8 +15,11 @@ router = APIRouter()
 templates = Jinja2Templates(directory='app/templates')
 engine = RetrievalEngine()
 
-UPLOAD_DIR = Path('workspace_docs/uploads')
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+UPLOAD_DIR = Path('/tmp/workspace_docs/uploads')
+try:
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    pass
 
 
 def load_meta():
