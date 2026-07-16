@@ -101,7 +101,7 @@ def base_ctx(request: Request, user_id: int = 1) -> dict:
     }
 
 
-# ── Home ──────────────────────────────────────────────────────────────────────
+# ââ Home ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 @router.get('/', response_class=HTMLResponse)
 def home(request: Request, user_id: int = 1):
     engine.build_index()
@@ -109,7 +109,7 @@ def home(request: Request, user_id: int = 1):
     return templates.TemplateResponse('index.html', ctx)
 
 
-# ── Search ────────────────────────────────────────────────────────────────────
+# ââ Search ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 @router.post('/search', response_class=HTMLResponse)
 def search(
     request:    Request,
@@ -143,7 +143,7 @@ def search(
     return templates.TemplateResponse('index.html', ctx)
 
 
-# ── Browse ────────────────────────────────────────────────────────────────────
+# ââ Browse ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 @router.get('/browse', response_class=HTMLResponse)
 def browse(request: Request, department: str = 'All', file_type: str = 'All', user_id: int = 1):
     engine.build_index()
@@ -166,7 +166,7 @@ def browse(request: Request, department: str = 'All', file_type: str = 'All', us
     return templates.TemplateResponse('index.html', ctx)
 
 
-# ── Analytics ─────────────────────────────────────────────────────────────────
+# ââ Analytics âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 @router.get('/analytics', response_class=HTMLResponse)
 def analytics(request: Request, user_id: int = 1):
     engine.build_index()
@@ -175,7 +175,7 @@ def analytics(request: Request, user_id: int = 1):
     return templates.TemplateResponse('index.html', ctx)
 
 
-# ── Bookmarks ─────────────────────────────────────────────────────────────────
+# ââ Bookmarks âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 @router.get('/bookmarks', response_class=HTMLResponse)
 def bookmarks_page(request: Request, user_id: int = 1):
     engine.build_index()
@@ -184,7 +184,7 @@ def bookmarks_page(request: Request, user_id: int = 1):
     return templates.TemplateResponse('index.html', ctx)
 
 
-# ── Upload ────────────────────────────────────────────────────────────────────
+# ââ Upload ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 @router.post('/upload', response_class=HTMLResponse)
 async def upload(request: Request, files: list[UploadFile] = File(...)):
     ctx = base_ctx(request)
@@ -199,7 +199,7 @@ async def upload(request: Request, files: list[UploadFile] = File(...)):
         except Exception as e: errors.append(f'{file.filename}: {e}')
     if saved:
         r = ingest_workspace(str(UPLOAD_DIR)); engine.build_index()
-        ctx['message'] = f'✓ {len(saved)} file(s) uploaded and indexed. {r["inserted"]} new, {r["updated"]} updated.'
+        ctx['message'] = f'â {len(saved)} file(s) uploaded and indexed. {r["inserted"]} new, {r["updated"]} updated.'
         ctx['message_type'] = 'success'
     if errors:
         ctx['message'] = (ctx.get('message') or '') + ' ' + '; '.join(errors)
@@ -207,14 +207,14 @@ async def upload(request: Request, files: list[UploadFile] = File(...)):
     return templates.TemplateResponse('index.html', ctx)
 
 
-# ── Ingest folder ─────────────────────────────────────────────────────────────
+# ââ Ingest folder âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 @router.post('/ingest', response_class=HTMLResponse)
 def ingest(request: Request, workspace: str = Form(...)):
     ctx = base_ctx(request); ctx['active_tab'] = 'upload'
     try:
         o = ingest_workspace(workspace); engine.build_index()
         ctx['workspace_value'] = workspace
-        ctx['message'] = f'Scan complete — {o["scanned"]} scanned, {o["inserted"]} added, {o["updated"]} updated.'
+        ctx['message'] = f'Scan complete â {o["scanned"]} scanned, {o["inserted"]} added, {o["updated"]} updated.'
         ctx['message_type'] = 'success'
     except FileNotFoundError as e:
         ctx['workspace_value'] = workspace
@@ -222,7 +222,7 @@ def ingest(request: Request, workspace: str = Form(...)):
     return templates.TemplateResponse('index.html', ctx)
 
 
-# ── Document detail ───────────────────────────────────────────────────────────
+# ââ Document detail âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 @router.get('/documents/{doc_id}', response_class=HTMLResponse)
 def document_detail(request: Request, doc_id: int, user_id: int = 1):
     engine.build_index()
@@ -231,15 +231,14 @@ def document_detail(request: Request, doc_id: int, user_id: int = 1):
     engine.record_click(user_id, doc_id)
     bids = get_bookmarked_ids(user_id)
     doc['bookmarked'] = doc_id in bids
-    related = engine.search(doc['title'].split()[0], user_id, {})
-    related = [r for r in related if r['id'] != doc_id][:4]
+    related = engine.related_documents(doc_id, limit=4)
     return templates.TemplateResponse('document.html', {
         'request': request, 'doc': doc, 'user_id': user_id,
         'related': related, 'bookmarked': doc_id in bids
     })
 
 
-# ── Bookmark toggle (JSON) ────────────────────────────────────────────────────
+# ââ Bookmark toggle (JSON) ââââââââââââââââââââââââââââââââââââââââââââââââââââ
 @router.post('/api/bookmark')
 def toggle_bookmark(user_id: int = Form(...), doc_id: int = Form(...)):
     conn = get_connection()
@@ -254,7 +253,7 @@ def toggle_bookmark(user_id: int = Form(...), doc_id: int = Form(...)):
     return JSONResponse({'bookmarked': state})
 
 
-# ── JSON API ──────────────────────────────────────────────────────────────────
+# ââ JSON API ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 @router.get('/api/search')
 def api_search(q: str, user_id: int = 1, department: str = 'All', file_type: str = 'All'):
     results = engine.search(q, user_id, {'department': department, 'file_type': file_type})
