@@ -1,6 +1,6 @@
 # Context-Aware Office File Retrieval Pro
 
-A context-aware document search engine for an office workspace. It ingests real files from department folders, ranks them with a BM25-style scorer, and then re-ranks results based on **who** is searching — their department, team, file-type preference, recency needs, and past access history. It is built to showcase practical Data Structures & Algorithms (DSA) and Database (DBMS) concepts for a semester project, portfolio, or demo.
+A context-aware document search engine for an office workspace. It ingests real files from department folders, ranks them with a BM25-style scorer, and then re-ranks results based on **who** is searching â their department, team, file-type preference, recency needs, and past access history. It is built to showcase practical Data Structures & Algorithms (DSA) and Database (DBMS) concepts for a semester project, portfolio, or demo.
 
 **Live demo:** https://context-based-file-retrieval-system.vercel.app
 
@@ -58,12 +58,12 @@ Seed users represent every department so you can test context-aware ranking (def
 
 Run the same query as different users and watch the order change:
 
-- `budget` — strongest for Sara Khan (Finance)
-- `leave policy` — strongest for Ali Raza / Ayesha Siddiqui (HR)
-- `server migration` — strongest for Usman Tariq / Zain Malik (IT)
-- `campaign` — strongest for Mariam Noor (Marketing)
-- `client proposal` — strongest for Bilal Ahmed (Sales)
-- `data privacy` — strongest for Hina Farooq (Legal)
+- `budget` â strongest for Sara Khan (Finance)
+- `leave policy` â strongest for Ali Raza / Ayesha Siddiqui (HR)
+- `server migration` â strongest for Usman Tariq / Zain Malik (IT)
+- `campaign` â strongest for Mariam Noor (Marketing)
+- `client proposal` â strongest for Bilal Ahmed (Sales)
+- `data privacy` â strongest for Hina Farooq (Legal)
 - `recruitment`, `incident`, `security`, `onboarding`
 
 ---
@@ -88,6 +88,8 @@ Run the same query as different users and watch the order change:
 - Faster repeat searches with an LRU cache
 - Filters for department and file type
 - Score explainability (why a document ranked where it did)
+- Export search results to CSV with one click
+- Related documents suggestions based on shared tags, department, and file type
 - Dashboard metrics: total documents, searches, top queries, most-opened files
 - Clean, responsive web UI
 
@@ -96,12 +98,12 @@ Run the same query as different users and watch the order change:
 ## Tech: DSA and DBMS
 
 **Data structures / algorithms**
-- Hash map / dictionary — inverted index and metadata lookup
-- Set operations — candidate retrieval
-- Trie — autocomplete
-- Heap / priority queue — top-K results
-- LRU cache — repeated searches
-- Counter / frequency tables — BM25-style ranking
+- Hash map / dictionary â inverted index and metadata lookup
+- Set operations â candidate retrieval
+- Trie â autocomplete
+- Heap / priority queue â top-K results
+- LRU cache â repeated searches
+- Counter / frequency tables â BM25-style ranking
 
 **Database**
 - PostgreSQL in production (SQLite-compatible schema for local use)
