@@ -17,10 +17,14 @@ USERS = [
 
 
 def seed_users() -> None:
+    # Idempotent: skip if users have already been seeded (e.g. get_connection()
+    # already auto-seeds on first use, or this script runs more than once).
     conn = get_connection()
-    conn.executemany(
-        'INSERT INTO users (name, role, department, team, preferred_file_type) VALUES (?, ?, ?, ?, ?)',
-        USERS,
-    )
-    conn.commit()
+    existing = conn.execute('SELECT COUNT(*) AS c FROM users').fetchone()
+    if not existing or not existing['c']:
+        conn.executemany(
+            'INSERT INTO users (name, role, department, team, preferred_file_type) VALUES (?, ?, ?, ?, ?)',
+            USERS,
+        )
+        conn.commit()
     conn.close()
