@@ -150,7 +150,7 @@ class RetrievalEngine:
         self.record_search(query, user_id, filters, len(results))
         return results
 
-    # Ã¢ÂÂÃ¢ÂÂ RAG: AI-synthesised answer from top results Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+    # ── RAG: AI-synthesised answer from top results ──────────────────────────
     def generate_ai_answer(self, query: str, results: List[dict]) -> Optional[str]:
         """
         Pass the top retrieved documents to Claude and generate a concise,
@@ -165,7 +165,7 @@ class RetrievalEngine:
             import anthropic
             client = anthropic.Anthropic(api_key=api_key)
 
-            # Build compact context from top 4 documents (Ã¢ÂÂ¤ 1800 chars each)
+            # Build compact context from top 4 documents (≤ 1800 chars each)
             context_parts = []
             for i, doc in enumerate(results[:4], 1):
                 chunk = doc['content'][:1800].replace('\n', ' ').strip()
@@ -300,7 +300,7 @@ ANSWER:"""
         for term in sorted(set(query_terms), key=len, reverse=True):
             pattern = re.compile(rf'({re.escape(term)})', re.IGNORECASE)
             snippet = pattern.sub(r'<mark>\1</mark>', snippet)
-        return snippet + ('Ã¢ÂÂ¦' if len(text) > pos + size else '')
+        return snippet + ('…' if len(text) > pos + size else '')
 
     def _size_label(self, size_bytes: int) -> str:
         if size_bytes < 1024:
@@ -319,7 +319,7 @@ ANSWER:"""
             reasons.append('recently modified')
         if debug.history_boost:
             reasons.append('in your access history')
-        return ' ÃÂ· '.join(reasons[:3]) or f"Relevant {doc['file_type'].upper()} document"
+        return ' · '.join(reasons[:3]) or f"Relevant {doc['file_type'].upper()} document"
 
     def record_click(self, user_id: int, doc_id: int) -> None:
         conn = get_connection()
