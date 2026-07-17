@@ -77,10 +77,25 @@ def init_db():
                 raw_conn.close()
 
 
+def _users_seeded(raw_conn):
+        cur = raw_conn.cursor()
+        cur.execute('SELECT COUNT(*) FROM users')
+        row = cur.fetchone()
+        return bool(row and row[0])
+
+
 def get_connection():
         raw_conn = _raw_connect()
         if not _schema_ready(raw_conn):
                 cur = raw_conn.cursor()
                 cur.execute(SCHEMA_PATH.read_text(encoding='utf-8'))
+                raw_conn.commit()
+        if not _users_seeded(raw_conn):
+                from app.services.seed import USERS
+                cur = raw_conn.cursor()
+                cur.executemany(
+                        'INSERT INTO users (name, role, department, team, preferred_file_type) VALUES (%s, %s, %s, %s, %s)',
+                        USERS,
+                )
                 raw_conn.commit()
         return ConnectionWrapper(raw_conn)
